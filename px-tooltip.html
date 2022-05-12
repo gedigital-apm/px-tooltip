@@ -292,7 +292,13 @@ Custom property | Description
       _tooltipPos: {
         type: String,
         value: "right"
+      },
+
+      tooltipTopPositionMode: { //this property added for US541208
+        type: Boolean,
+        value: false
       }
+
     },
     observers: ["_onMouseMove(mouseCoords.*)", "_openedChanged(opened)", "_ignoreTargetEventsChanged(ignoreTargetEvents)"],
     listeners: {
@@ -399,7 +405,22 @@ Custom property | Description
     },
 
     _onMouseMove: function() {
+      
       if (this.followMouse && this.thisRect && this.visible) {
+        
+        
+        if (this.tooltipTopPositionMode) { //this condition added for US541208
+
+          // using this method so that we can calculate the best position
+          // in the _positionXXX methods without having to do recursion, plus
+          // avoiding issues when in tables in IE and inside scroll panes
+        
+          this.targetRect = this.followMouse ? this.getBoundingClientRect() : this._target.getBoundingClientRect();
+          this.thisRect = this.followMouse ? this.targetRect : this.getBoundingClientRect();
+
+          this.set('orientation', 'top');
+        }
+
         if (this.orientation === "auto") {
           //auto positioning
           this._autoPosition();
@@ -576,6 +597,10 @@ Custom property | Description
       this.targetRect = this.followMouse ? this.getBoundingClientRect() : this._target.getBoundingClientRect();
       this.thisRect = this.followMouse ? this.targetRect : this.getBoundingClientRect();
 
+      if (this.tooltipTopPositionMode) { //this condition added for US541208
+        this.set('orientation', 'top');      
+      }
+
       if (this.orientation === "auto") {
         //auto positioning
         this._autoPosition();
@@ -594,9 +619,13 @@ Custom property | Description
      *
      */
     _autoPosition: function() {
-      // smart position to right automatically for now
+      // smart position to right automatically for now  Changed to top for now- US541208
+      if (this.tooltipTopPositionMode) {
+        this._doPosition(this._findValidSmartOrientation(this._values.TYPE.top));
+      } else {
+        this._doPosition(this._findValidSmartOrientation(this._values.TYPE.right));
+      }
 
-      this._doPosition(this._findValidSmartOrientation(this._values.TYPE.right));
     },
     /**
      * This function checks if the tooltip can be fitted on the left.
